@@ -792,7 +792,7 @@ def gen_img(text,
     
     generator = torch.Generator(device="cpu").manual_seed(26)
 
-    story_ls, characters, location_ls = llm_agents(stories[i],tokenizer, model)
+    story_ls, characters, location_ls = llm_agents(text,tokenizer, model)
     
     story_report = create_story_report(
                                     story_ls=story_ls,
