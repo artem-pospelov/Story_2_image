@@ -1,60 +1,54 @@
-import os
-from telegram import Update, InputFile
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from story_image import gen_img  # Импортируем вашу функцию генерации
+import io
+from aiogram import Bot, Dispatcher, types
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters.state import State, StatesGroup
+from aiogram.utils import executor
+from story_image import *
 
-TOKEN = "7011351217:AAHArFPjVC13IlexGydcyn7eUsVk45SboBQ"
-MAX_TEXT_LENGTH = 200  # Максимальная длина текста
+# Замените на ваш токен
+API_TOKEN = '7011351217:AAHArFPjVC13IlexGydcyn7eUsVk45SboBQ'
 
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    help_text = """
-📷 *Бот-генератор изображений*
-Просто отправьте мне историю, и я создам иллюстрации к ней!
+# Инициализация бота
+bot = Bot(token=API_TOKEN)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
 
-⚠ Ограничение: {max_len} символов
-""".format(max_len=MAX_TEXT_LENGTH)
-    await update.message.reply_text(help_text, parse_mode='Markdown')
+class Form(StatesGroup):
+    waiting_for_text = State()
 
-async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_text = update.message.text
+@dp.message_handler(commands=['start'])
+async def cmd_start(message: types.Message):
+    await message.answer("Привет! Отправь мне историю, и я сгенерирую для тебя иллюстрации к ней.")
+    await Form.waiting_for_text.set()
+
+@dp.message_handler(state=Form.waiting_for_text)
+async def process_text(message: types.Message, state: FSMContext):
+    user_text = message.text
     
-    if len(user_text) > MAX_TEXT_LENGTH:
-        await update.message.reply_text(f"⚠ Слишком длинный текст. Максимум {MAX_TEXT_LENGTH} символов")
+    # Получаем данные от функции gen_img
+    best_frames, best_clips, best_lpips, story_ls = gen_img(user_text)
+    
+    # Проверяем, что все списки одинаковой длины
+    if not (len(best_frames) == len(best_clips) == len(best_lpips) == len(story_ls)):
+        await message.answer("Ошибка: получены списки разной длины")
+        await state.finish()
         return
     
-    try:
-        # Отправляем статус "печатает..."
-        await update.message.chat.send_action(action="typing")
+    # Отправляем пользователю все сгенерированные сообщения
+    for i in range(len(story_ls)):
+        # Формируем текст сообщения с метриками
+        msg_text = f"{story_ls[i]}\n\nМетрики:\nCLIP: {best_clips[i]}\nLPIPS: {best_lpips[i]}"
         
-        # Генерируем изображение
-        img = gen_img(user_text)
+        # Конвертируем изображение в байты
+        img_byte_arr = io.BytesIO()
+        best_frames[i].save(img_byte_arr, format='JPEG')
+        img_byte_arr.seek(0)
         
-        # Сохраняем временно
-        img_path = f"temp_{update.message.message_id}.jpg"
-        img.save(img_path, "JPEG", quality=90)
-        
-        # Отправляем изображение
-        with open(img_path, 'rb') as photo:
-            await update.message.reply_photo(photo=InputFile(photo))
-        
-        # Удаляем временный файл
-        os.remove(img_path)
-        
-    except Exception as e:
-        await update.message.reply_text(f"⚠ Ошибка генерации: {str(e)}")
+        # Отправляем фото с подписью
+        await message.answer_photo(types.InputFile(img_byte_arr), caption=msg_text)
+    
+    await state.finish()
 
-def main():
-    app = Application.builder().token(TOKEN).build()
-    
-    # Обработчики команд
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", start))
-    
-    # Обработчик текстовых сообщений
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
-    
-    print("Бот запущен...")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    executor.start_polling(dp, skip_updates=True)
