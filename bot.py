@@ -33,29 +33,29 @@ async def on_shutdown(dp):
     print("Бот остановлен")
 
 # Предполагаемая функция gen_img (замените на вашу реальную функцию)
-def gen_img(text: str):
-    # Здесь ваша логика обработки текста и генерации данных
-    # Пример возвращаемых данных (замените на реальные)
-    from PIL import Image, ImageDraw
+# def gen_img(text: str):
+#     # Здесь ваша логика обработки текста и генерации данных
+#     # Пример возвращаемых данных (замените на реальные)
+#     from PIL import Image, ImageDraw
     
-    # Создаем тестовые изображения
-    images = []
-    for i in range(4):
-        img = Image.new('RGB', (256, 256), color=(i*50, i*30, i*70))
-        d = ImageDraw.Draw(img)
-        d.text((10, 10), f"Image {i+1}", fill=(255, 255, 0))
-        images.append(img)
+#     # Создаем тестовые изображения
+#     images = []
+#     for i in range(4):
+#         img = Image.new('RGB', (256, 256), color=(i*50, i*30, i*70))
+#         d = ImageDraw.Draw(img)
+#         d.text((10, 10), f"Image {i+1}", fill=(255, 255, 0))
+#         images.append(img)
     
-    best_frames = images
-    best_clips = [0.9, 0.8, 0.7, 0.6]
-    best_lpips = [0.1, 0.2, 0.3, 0.4]
-    story_ls = [
-        "История 1 по вашему тексту",
-        "История 2 по вашему тексту",
-        "История 3 по вашему тексту",
-        "История 4 по вашему тексту"
-    ]
-    return best_frames, best_clips, best_lpips, story_ls
+#     best_frames = images
+#     best_clips = [0.9, 0.8, 0.7, 0.6]
+#     best_lpips = [0.1, 0.2, 0.3, 0.4]
+#     story_ls = [
+#         "История 1 по вашему тексту",
+#         "История 2 по вашему тексту",
+#         "История 3 по вашему тексту",
+#         "История 4 по вашему тексту"
+#     ]
+#     return best_frames, best_clips, best_lpips, story_ls
 
 class Form(StatesGroup):
     waiting_for_text = State()
