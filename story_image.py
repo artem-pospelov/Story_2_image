@@ -822,5 +822,5 @@ def gen_img(text,
                                                                     characters=characters,
                                                                     generator=generator)
     
-    return best_frames, best_clips, best_lpips
+    return best_frames, best_clips, best_lpips, story_ls
         
