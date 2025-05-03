@@ -15,7 +15,7 @@ from aiogram.utils import executor
 from datetime import datetime
 
 API_TOKEN = ''7011351217:AAHArFPjVC13IlexGydcyn7eUsVk45SboBQ''
-
+ADMIN_CHAT_ID = 234037002
 # Инициализация бота
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
