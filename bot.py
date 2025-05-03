@@ -8,7 +8,6 @@ from story_image import *
 
 # Замените на ваш токен
 API_TOKEN = '7011351217:AAHArFPjVC13IlexGydcyn7eUsVk45SboBQ'
-
 # # Инициализация бота
 # bot = Bot(token=API_TOKEN)
 # storage = MemoryStorage()
@@ -174,14 +173,14 @@ async def process_text(message: types.Message, state: FSMContext):
     
     except Exception as e:
         await message.answer(f"❌ Произошла ошибка: {str(e)}")
-        #await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Ошибка в боте: {str(e)}")
+        await bot.send_message(chat_id=ADMIN_CHAT_ID, text=f"Ошибка в боте: {str(e)}")
     
     finally:
         await state.finish()
 
 if __name__ == '__main__':
     # Замените на ваш chat_id для уведомлений
-    #ADMIN_CHAT_ID = 123456789
+    ADMIN_CHAT_ID = 234037002
     
     executor.start_polling(dp, 
                          on_startup=on_startup, 
