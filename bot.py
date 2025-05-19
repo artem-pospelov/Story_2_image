@@ -15,7 +15,7 @@ from story_image import *
 API_TOKEN = 'YOUR_BOT_TOKEN'
 ADMIN_CHAT_ID = 234037002
 REDIS_URL = "redis://localhost"
-MAX_WORKERS = 4  # Максимальное количество параллельных задач
+MAX_WORKERS = 3  # Максимальное количество параллельных задач
 
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
