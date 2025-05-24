@@ -99,7 +99,7 @@ async def process_image_task(task):
         text = task['text']
         style = task['style']
         
-        delay = random.randint(45, 90)
+        delay = random.randint(1, 30)
         await bot.send_message(chat_id, f"⏳ Обработка вашего запроса займет примерно {delay} секунд...")
         await asyncio.sleep(delay)
         
