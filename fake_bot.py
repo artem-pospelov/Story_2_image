@@ -1,7 +1,7 @@
 import io
 import asyncio
 import json
-import concurrent.futures
+import os
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher import FSMContext
@@ -11,59 +11,79 @@ from datetime import datetime
 from redis import asyncio as aioredis
 from PIL import Image, ImageDraw, ImageFont
 import random
+import time
 
 # Конфигурация
 API_TOKEN = '7011351217:AAHArFPjVC13IlexGydcyn7eUsVk45SboBQ'
 ADMIN_CHAT_ID = 234037002
 REDIS_URL = "redis://localhost:6379/0"
-MAX_WORKERS = 4
 FONT_PATH = "arial.ttf"  # Укажите путь к шрифту
+IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), "./Story_2_image/example")  # Путь к папке example
 
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
 dp = Dispatcher(bot, storage=storage)
-executor_pool = concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS)
 
 class Form(StatesGroup):
     waiting_for_style = State()
     waiting_for_text = State()
 
-def fake_gen_img(text, style):
-    """Генерация фейковых изображений с текстом"""
+def get_local_images(text, style):
+    """Получение изображений из локальной папки с сортировкой по названию"""
     images = []
     stories = []
     
-    # Создаем 3 тестовых варианта
-    for i in range(3):
-        # Создаем изображение 512x512
-        img = Image.new('RGB', (512, 512), color=(random.randint(0, 255), 
-                       random.randint(0, 255), random.randint(0, 255)))
-        d = ImageDraw.Draw(img)
-        
+    # Проверяем существование папки
+    if not os.path.exists(IMAGE_FOLDER):
+        os.makedirs(IMAGE_FOLDER)
+        return [], [], [], ["Папка с изображениями пуста"]
+    
+    # Получаем список файлов в папке и сортируем по названию
+    image_files = sorted(
+        [f for f in os.listdir(IMAGE_FOLDER) if f.lower().endswith(('.png', '.jpg', '.jpeg'))],
+        key=lambda x: x.lower()
+    )
+    
+    # Если файлов нет, возвращаем пустой список
+    if not image_files:
+        return [], [], [], ["Папка с изображениями пуста"]
+    
+    # Выбираем первые 3 изображения (после сортировки)
+    selected_files = image_files[:3]
+    
+    for i, filename in enumerate(selected_files):
         try:
-            font = ImageFont.truetype(FONT_PATH, 40)
-        except:
-            font = ImageFont.load_default()
+            img_path = os.path.join(IMAGE_FOLDER, filename)
+            img = Image.open(img_path)
             
-        text_position = (50, 256-20)
-        d.text(text_position, f"Вариант {i+1}\n{text[:20]}...", 
-              font=font, fill=(255, 255, 255))
-        
-        images.append(img)
-        stories.append(f"Фейковая история {i+1} для текста: {text[:50]}...")
+            # Добавляем текст на изображение
+            draw = ImageDraw.Draw(img)
+            try:
+                font = ImageFont.truetype(FONT_PATH, 40)
+            except:
+                font = ImageFont.load_default()
+            
+            text_position = (50, 50)
+            draw.text(text_position, f"Вариант {i+1}\n{text[:20]}...", 
+                     font=font, fill=(255, 255, 255))
+            
+            images.append(img)
+            stories.append(f"Пример {i+1} для текста: {text[:50]}... (из файла {filename})")
+        except Exception as e:
+            print(f"Ошибка обработки изображения {filename}: {e}")
     
     # Генерируем фейковые метрики
-    clips = [random.uniform(0.7, 0.9) for _ in range(3)]
-    lpips = [random.uniform(0.2, 0.4) for _ in range(3)]
+    clips = [random.uniform(0.7, 0.9) for _ in range(len(images))]
+    lpips = [random.uniform(0.2, 0.4) for _ in range(len(images))]
     
     return images, clips, lpips, stories
 
 async def on_startup(dp):
-    await bot.send_message(ADMIN_CHAT_ID, "🤖 Фейк-бот запущен!")
+    await bot.send_message(ADMIN_CHAT_ID, "🤖 Бот для отправки локальных изображений запущен!")
     asyncio.create_task(task_consumer())
 
 async def on_shutdown(dp):
-    await bot.send_message(ADMIN_CHAT_ID, "🔴 Фейк-бот остановлен")
+    await bot.send_message(ADMIN_CHAT_ID, "🔴 Бот остановлен")
     redis = await aioredis.from_url(REDIS_URL)
     await redis.close()
 
@@ -81,18 +101,20 @@ async def process_image_task(task):
         text = task['text']
         style = task['style']
         
-        await bot.send_message(chat_id, "🚀 Начинаю генерацию вашего изображения...")
+        # Добавляем случайную задержку от 15 до 30 секунд
+        delay = random.randint(15, 30)
+        await bot.send_message(chat_id, f"⏳ Обработка вашего запроса займет {delay} секунд...")
+        await asyncio.sleep(delay)
         
-        # Запускаем фейковую генерацию
-        result = await asyncio.get_event_loop().run_in_executor(
-            executor_pool,
-            lambda: fake_gen_img(text, style)
-        )
+        await bot.send_message(chat_id, "🚀 Подготовка ваших изображений...")
         
+        # Получаем изображения из локальной папки
+        result = get_local_images(text, style)
         best_frames, best_clips, best_lpips, story_ls = result
         
-        # Имитация обработки
-        await asyncio.sleep(2)
+        if not best_frames:
+            await bot.send_message(chat_id, "❌ В папке нет изображений для отправки")
+            return
         
         # Отправка результатов
         for i in range(len(story_ls)):
@@ -105,9 +127,9 @@ async def process_image_task(task):
             img_byte_arr.seek(0)
             
             await bot.send_photo(chat_id, types.InputFile(img_byte_arr), caption=caption)
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(1)  # Небольшая пауза между отправкой изображений
         
-        await bot.send_message(chat_id, "✅ Генерация завершена! /start для нового запроса")
+        await bot.send_message(chat_id, "✅ Изображения отправлены! /start для нового запроса")
     
     except Exception as e:
         await bot.send_message(chat_id, f"❌ Ошибка: {str(e)}")
@@ -149,10 +171,15 @@ async def process_text(message: types.Message, state: FSMContext):
     await message.answer(
         f"⏳ Запрос принят в обработку.\n"
         f"📍 Ваша позиция в очереди: {queue_position}\n"
-        f"⏱ Ожидайте начала генерации..."
+        f"⏱ Ожидайте начала обработки..."
     )
 
 if __name__ == '__main__':
+    # Проверяем существование папки example при запуске
+    if not os.path.exists(IMAGE_FOLDER):
+        os.makedirs(IMAGE_FOLDER)
+        print(f"Создана папка для изображений: {IMAGE_FOLDER}")
+    
     executor.start_polling(dp, 
                          on_startup=on_startup,
                          on_shutdown=on_shutdown,
