@@ -51,6 +51,13 @@ def get_local_images(text, style):
     # Выбираем первые 3 изображения (после сортировки)
     selected_files = image_files[:3]
     
+    # Стильные нуар-подписи для изображений
+    noir_captions = [
+        "Чёрная машина под дождём. В салоне — кожаный портфель с деньгами и пистолетом.",
+        "Двое выходят из тени. Без слов обмениваются взглядами. В воздухе пахнет изменой и дождём.",
+        "Машина исчезает в ночи, оставляя только следы на мокром асфальте и неотвеченные вопросы."
+    ]
+    
     for i, filename in enumerate(selected_files):
         try:
             img_path = os.path.join(IMAGE_FOLDER, filename)
@@ -63,12 +70,16 @@ def get_local_images(text, style):
             except:
                 font = ImageFont.load_default()
             
-            text_position = (50, 50)
-            draw.text(text_position, f"Вариант {i+1}\n{text[:20]}...", 
+            # Позиция текста зависит от размера изображения
+            width, height = img.size
+            text_position = (width//10, height//10)
+            
+            # Добавляем нуар-подпись в угол изображения
+            draw.text(text_position, noir_captions[i], 
                      font=font, fill=(255, 255, 255))
             
             images.append(img)
-            stories.append(f"Пример {i+1} для текста: {text[:50]}... (из файла {filename})")
+            stories.append(noir_captions[i] + f"\n\nФайл: {filename}")
         except Exception as e:
             print(f"Ошибка обработки изображения {filename}: {e}")
     
