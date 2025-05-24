@@ -104,7 +104,7 @@ async def process_image_task(task):
         # Добавляем случайную задержку от 15 до 30 секунд
         delay = random.randint(15, 30)
         await bot.send_message(chat_id, f"⏳ Обработка вашего запроса займет {delay} секунд...")
-        await asyncio.sleep(delay)
+        #await asyncio.sleep(delay)
         
         await bot.send_message(chat_id, "🚀 Подготовка ваших изображений...")
         
