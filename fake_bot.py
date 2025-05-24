@@ -15,7 +15,7 @@ import random
 # Конфигурация
 API_TOKEN = '7011351217:AAHArFPjVC13IlexGydcyn7eUsVk45SboBQ'
 ADMIN_CHAT_ID = 234037002
-REDIS_URL = "redis://localhost"
+REDIS_URL = "redis://localhost:6379/0"
 MAX_WORKERS = 4
 FONT_PATH = "arial.ttf"  # Укажите путь к шрифту
 
