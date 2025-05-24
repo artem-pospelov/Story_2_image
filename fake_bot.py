@@ -8,7 +8,7 @@ from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.utils import executor
 from datetime import datetime
-import aioredis
+from redis import asyncio as aioredis
 from PIL import Image, ImageDraw, ImageFont
 import random
 
