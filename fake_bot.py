@@ -18,7 +18,7 @@ API_TOKEN = '7011351217:AAHArFPjVC13IlexGydcyn7eUsVk45SboBQ'
 ADMIN_CHAT_ID = 234037002
 REDIS_URL = "redis://localhost:6379/0"
 FONT_PATH = "arial.ttf"  # Укажите путь к шрифту
-IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), "./Story_2_image/example")  # Путь к папке example
+IMAGE_FOLDER = os.path.join(os.path.dirname(__file__), "example")  # Путь к папке example
 
 bot = Bot(token=API_TOKEN)
 storage = MemoryStorage()
