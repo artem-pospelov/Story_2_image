@@ -71,8 +71,8 @@ def get_local_images(text, style):
         except Exception as e:
             print(f"Ошибка обработки изображения: {e}")
     
-    clips = [random.uniform(0.7, 0.9) for _ in range(len(images))]
-    lpips = [random.uniform(0.2, 0.4) for _ in range(len(images))]
+    clips = [random.uniform(0.3, 0.4) for _ in range(len(images))]
+    lpips = [random.uniform(0.25, 0.35) for _ in range(len(images))]
     
     return images, clips, lpips, stories
 
